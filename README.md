@@ -1,4 +1,14 @@
-# Pomo PWA – Firebase edition
+# Pomo
+
+PWA focus timer and study analytics app built with React, TypeScript, Vite and Firebase.
+
+## Stack
+
+- React + TypeScript + Vite
+- Firebase Authentication (Email/Password)
+- Cloud Firestore
+- Recharts
+- Vite PWA
 
 ## Run locally
 
@@ -7,24 +17,24 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL shown in the terminal.
+## Build
 
-## Firebase already configured
+```bash
+npm run build
+```
 
-This build is connected to the Firebase web app for project `pomo-f1093`.
-It uses:
-- Firebase Authentication (Email/Password)
-- Cloud Firestore
+## Firestore collections
 
-Required collections are created automatically when the first records are added:
+Collections are created automatically when data is first saved:
+
 - `projects`
 - `tasks`
 - `focusSessions`
 
-## Security Rules
+## Firebase security
 
-The required rules are included in `firestore.rules`. Publish the same rules in Firebase Console → Firestore Database → Rules.
+The Firestore rules used by the app are in `firestore.rules`.
 
 ## Timer model
 
-The timer does not depend on a background process. A focus session stores `started_at`. The UI derives elapsed time from the current clock, so closing/reopening the PWA keeps the timer accurate.
+Pomo does not rely on a background process to keep time. Every running focus session stores its `started_at` timestamp in Firestore. The UI derives elapsed time from the current clock, so the timer stays accurate after closing or reopening the PWA.
