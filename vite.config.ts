@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/pomo/',
   plugins: [
     react(),
     VitePWA({
@@ -14,10 +15,11 @@ export default defineConfig({
         theme_color: '#111827',
         background_color: '#0b1220',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/pomo/',
+        scope: '/pomo/',
         icons: [
-          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png' }
+          { src: '/pomo/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/pomo/pwa-512x512.png', sizes: '512x512', type: 'image/png' }
         ]
       }
     })
