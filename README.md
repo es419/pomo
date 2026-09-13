@@ -25,3 +25,10 @@ After pushing, open **GitHub → Settings → Pages** and make sure **Source** i
 The production URL for this repository is expected to be:
 
 `https://es419.github.io/pomo/`
+
+
+## Latest UI
+- Animated launch splash using the Pomo icon
+- Delete tasks with their focus history
+- Delete projects with their tasks and related focus history
+- Active timers are protected from accidental task/project deletion

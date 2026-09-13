@@ -13,6 +13,8 @@ import { History } from './components/History'
 import { Auth } from './components/Auth'
 import { TaskCreator } from './components/TaskCreator'
 import { ProjectCreator } from './components/ProjectCreator'
+import { OrganizerList } from './components/OrganizerList'
+import { deleteProjectAndContents, deleteTaskAndSessions } from './lib/organize'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -64,6 +66,12 @@ export default function App() {
   const [error, setError] = useState('')
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
   const [activeTab, setActiveTab] = useState<'focus' | 'stats'>('focus')
+  const [splashDone, setSplashDone] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSplashDone(true), 1150)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => onAuthStateChanged(auth, nextUser => {
     setUser(nextUser)
@@ -123,7 +131,16 @@ export default function App() {
 
   useEffect(() => { void refresh() }, [user])
 
-  if (!authReady) return null
+  if (!authReady || !splashDone) {
+    return (
+      <div className="splash-screen" role="status" aria-label="Pomo נטענת">
+        <div className="splash-glow" />
+        <img className="splash-logo" src={`${import.meta.env.BASE_URL}pwa-512x512.png`} alt="" />
+        <div className="splash-name">POMO</div>
+        <div className="splash-loader"><span /></div>
+      </div>
+    )
+  }
   if (!user) return <Auth />
 
   const activeTasks = tasks.filter(t => !t.completed)
@@ -202,14 +219,33 @@ export default function App() {
             </div>
             <ProjectCreator onCreated={() => void refresh()} />
             <TaskCreator projects={projects} onCreated={() => void refresh()} />
-            {projects.length > 0 && (
-              <div className="project-list">
-                {projects.map(project => {
-                  const count = activeTasks.filter(t => t.project_id === project.id).length
-                  return <span className="project-chip" key={project.id}>{project.name}<small>{count}</small></span>
-                })}
-              </div>
-            )}
+            <OrganizerList
+              projects={projects}
+              tasks={activeTasks}
+              onDeleteTask={async (task) => {
+                const ok = window.confirm(`למחוק את המשימה “${task.title}”?\n\nגם היסטוריית זמן העבודה של המשימה תימחק.`)
+                if (!ok) return
+                try {
+                  setError('')
+                  await deleteTaskAndSessions(task.id)
+                  await refresh()
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'לא הצלחתי למחוק את המשימה')
+                }
+              }}
+              onDeleteProject={async (project) => {
+                const taskCount = tasks.filter(task => task.project_id === project.id).length
+                const ok = window.confirm(`למחוק את הפרויקט “${project.name}”?\n\n${taskCount ? `יימחקו גם ${taskCount} משימות וכל היסטוריית העבודה שלהן.` : 'כל היסטוריית העבודה המשויכת אליו תימחק.'}`)
+                if (!ok) return
+                try {
+                  setError('')
+                  await deleteProjectAndContents(project.id)
+                  await refresh()
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'לא הצלחתי למחוק את הפרויקט')
+                }
+              }}
+            />
           </section>
         </>
       ) : (
