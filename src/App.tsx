@@ -14,6 +14,8 @@ import { Auth } from './components/Auth'
 import { TaskCreator } from './components/TaskCreator'
 import { ProjectCreator } from './components/ProjectCreator'
 
+type ThemeMode = 'light' | 'dark' | 'system'
+
 function projectFromDoc(id: string, data: Record<string, unknown>): Project {
   return {
     id,
@@ -47,6 +49,11 @@ function sessionFromDoc(id: string, data: Record<string, unknown>): FocusSession
   }
 }
 
+function getInitialTheme(): ThemeMode {
+  const saved = localStorage.getItem('pomo-theme')
+  return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system'
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null)
   const [authReady, setAuthReady] = useState(false)
@@ -55,11 +62,30 @@ export default function App() {
   const [running, setRunning] = useState<FocusSession | null>(null)
   const [history, setHistory] = useState<FocusSession[]>([])
   const [error, setError] = useState('')
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
 
   useEffect(() => onAuthStateChanged(auth, nextUser => {
     setUser(nextUser)
     setAuthReady(true)
   }), [])
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const applyTheme = () => {
+      const resolved = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme
+      document.documentElement.dataset.theme = resolved
+      document.documentElement.dataset.themeMode = theme
+      document.documentElement.style.colorScheme = resolved
+      const themeMeta = document.querySelector('meta[name="theme-color"]')
+      themeMeta?.setAttribute('content', resolved === 'dark' ? '#07111f' : '#f4f7fb')
+    }
+
+    localStorage.setItem('pomo-theme', theme)
+    applyTheme()
+    media.addEventListener('change', applyTheme)
+    return () => media.removeEventListener('change', applyTheme)
+  }, [theme])
 
   async function refresh() {
     if (!user) return
@@ -111,7 +137,14 @@ export default function App() {
           <h1>הזמן שלך. באמת.</h1>
           <p className="header-copy">בחר משימה, תתחיל לעבוד — ופומו כבר תזכור את כל השאר.</p>
         </div>
-        <button className="link-button" onClick={() => void signOut(auth)}>יציאה</button>
+        <div className="topbar-actions">
+          <div className="theme-switch" role="group" aria-label="ערכת נושא">
+            <button className={theme === 'light' ? 'active' : ''} onClick={() => setTheme('light')} title="בהיר">☀️</button>
+            <button className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')} title="כהה">🌙</button>
+            <button className={theme === 'system' ? 'active' : ''} onClick={() => setTheme('system')} title="מערכת">◐</button>
+          </div>
+          <button className="link-button" onClick={() => void signOut(auth)}>יציאה</button>
+        </div>
       </header>
 
       {error && <div className="error">{error}</div>}
