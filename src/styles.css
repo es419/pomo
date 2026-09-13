@@ -133,3 +133,76 @@ input { margin-bottom:12px; }
   .topbar-actions { flex-direction:column; align-items:flex-end; }
   .theme-switch button { width:31px; height:30px; }
 }
+
+
+/* Main app tabs — clean segmented control */
+.app-tabs {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin:0 0 18px;
+  padding:5px;
+  border:1px solid var(--border-soft);
+  border-radius:20px;
+  background:var(--surface);
+  box-shadow:0 12px 34px var(--shadow);
+  backdrop-filter:blur(18px);
+}
+.app-tabs button {
+  position:relative;
+  overflow:hidden;
+  border:0;
+  border-radius:15px;
+  min-height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  background:transparent;
+  color:var(--muted);
+  font-weight:850;
+  transition:background .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.app-tabs button:hover { color:var(--text-soft); }
+.app-tabs button:active { transform:scale(.99); }
+.app-tabs button.active {
+  color:#eff9ff;
+  background:linear-gradient(135deg, #0f4f78 0%, #12668f 52%, #1688b8 100%);
+  box-shadow:0 7px 20px rgba(2,132,199,.24), inset 0 0 0 1px rgba(186,230,253,.16);
+}
+:root[data-theme="light"] .app-tabs button.active {
+  color:white;
+  background:linear-gradient(135deg, #0369a1 0%, #0284c7 52%, #0ea5e9 100%);
+  box-shadow:0 7px 20px rgba(2,132,199,.22);
+}
+.tab-icon {
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  font-size:19px;
+  line-height:1;
+  opacity:.92;
+}
+.tab-heading { padding:10px 4px 8px; }
+.tab-heading h2 { margin-bottom:6px; font-size:clamp(28px, 6vw, 38px); }
+.stats-tab { animation:tab-in .18s ease-out; }
+@keyframes tab-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+@media (max-width:650px) {
+  .shell { padding-bottom:max(34px, env(safe-area-inset-bottom)); }
+  .app-tabs {
+    position:static;
+    width:100%;
+    margin:0 0 16px;
+    border-radius:18px;
+    padding:5px;
+  }
+  .app-tabs button {
+    min-height:52px;
+    flex-direction:row;
+    gap:7px;
+    font-size:15px;
+  }
+  .tab-icon { font-size:18px; }
+}

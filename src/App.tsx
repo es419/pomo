@@ -63,6 +63,7 @@ export default function App() {
   const [history, setHistory] = useState<FocusSession[]>([])
   const [error, setError] = useState('')
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
+  const [activeTab, setActiveTab] = useState<'focus' | 'stats'>('focus')
 
   useEffect(() => onAuthStateChanged(auth, nextUser => {
     setUser(nextUser)
@@ -149,70 +150,92 @@ export default function App() {
 
       {error && <div className="error">{error}</div>}
 
-      {running ? (
-        <Timer
-          session={running}
-          task={runningTask}
-          project={runningProject}
-          onStop={async () => {
-            try {
-              await stopSession(running)
-              await refresh()
-            } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
-          }}
-        />
-      ) : activeTasks.length > 0 ? (
-        <StartPanel
-          tasks={activeTasks}
-          projects={projects}
-          onStart={async ({ taskId, mode, plannedSeconds }) => {
-            try {
-              setError('')
-              const task = activeTasks.find(t => t.id === taskId)
-              const session = await startSession({ taskId, projectId: task?.project_id, mode, plannedSeconds })
-              setRunning(session)
-            } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
-          }}
-        />
+      <nav className="app-tabs" aria-label="ניווט ראשי">
+        <button className={activeTab === 'focus' ? 'active' : ''} onClick={() => setActiveTab('focus')}>
+          <span className="tab-icon">◷</span>
+          <span>פוקוס</span>
+        </button>
+        <button className={activeTab === 'stats' ? 'active' : ''} onClick={() => setActiveTab('stats')}>
+          <span className="tab-icon">▤</span>
+          <span>סטטיסטיקות</span>
+        </button>
+      </nav>
+
+      {activeTab === 'focus' ? (
+        <>
+          {running ? (
+            <Timer
+              session={running}
+              task={runningTask}
+              project={runningProject}
+              onStop={async () => {
+                try {
+                  await stopSession(running)
+                  await refresh()
+                } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
+              }}
+            />
+          ) : activeTasks.length > 0 ? (
+            <StartPanel
+              tasks={activeTasks}
+              projects={projects}
+              onStart={async ({ taskId, mode, plannedSeconds }) => {
+                try {
+                  setError('')
+                  const task = activeTasks.find(t => t.id === taskId)
+                  const session = await startSession({ taskId, projectId: task?.project_id, mode, plannedSeconds })
+                  setRunning(session)
+                } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
+              }}
+            />
+          ) : (
+            <section className="card empty-state">
+              <div className="eyebrow">START HERE</div>
+              <h2>צור משימה ראשונה</h2>
+              <p className="muted">אחרי שתיצור משימה יופיע כאן כפתור ההתחלה.</p>
+            </section>
+          )}
+
+          <section className="card manage-card">
+            <div className="section-head">
+              <div><div className="eyebrow">ORGANIZE</div><h2>פרויקטים ומשימות</h2></div>
+            </div>
+            <ProjectCreator onCreated={() => void refresh()} />
+            <TaskCreator projects={projects} onCreated={() => void refresh()} />
+            {projects.length > 0 && (
+              <div className="project-list">
+                {projects.map(project => {
+                  const count = activeTasks.filter(t => t.project_id === project.id).length
+                  return <span className="project-chip" key={project.id}>{project.name}<small>{count}</small></span>
+                })}
+              </div>
+            )}
+          </section>
+        </>
       ) : (
-        <section className="card empty-state">
-          <div className="eyebrow">START HERE</div>
-          <h2>צור משימה ראשונה</h2>
-          <p className="muted">אחרי שתיצור משימה יופיע כאן כפתור ההתחלה.</p>
+        <section className="stats-tab">
+          <div className="tab-heading">
+            <div className="eyebrow">INSIGHTS</div>
+            <h2>הסטטיסטיקות שלך</h2>
+            <p className="muted">כל זמן העבודה, המגמות וההיסטוריה במקום אחד.</p>
+          </div>
+          <Stats sessions={history} tasks={tasks} projects={projects} />
+          <History
+            sessions={history}
+            tasks={tasks}
+            projects={projects}
+            onDelete={async (sessionId) => {
+              try {
+                setError('')
+                await deleteFocusSession(sessionId)
+                setHistory(prev => prev.filter(session => session.id !== sessionId))
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'לא הצלחתי למחוק את זמן העבודה')
+              }
+            }}
+          />
         </section>
       )}
-
-      <section className="card manage-card">
-        <div className="section-head">
-          <div><div className="eyebrow">ORGANIZE</div><h2>פרויקטים ומשימות</h2></div>
-        </div>
-        <ProjectCreator onCreated={() => void refresh()} />
-        <TaskCreator projects={projects} onCreated={() => void refresh()} />
-        {projects.length > 0 && (
-          <div className="project-list">
-            {projects.map(project => {
-              const count = activeTasks.filter(t => t.project_id === project.id).length
-              return <span className="project-chip" key={project.id}>{project.name}<small>{count}</small></span>
-            })}
-          </div>
-        )}
-      </section>
-
-      <Stats sessions={history} tasks={tasks} projects={projects} />
-      <History
-        sessions={history}
-        tasks={tasks}
-        projects={projects}
-        onDelete={async (sessionId) => {
-          try {
-            setError('')
-            await deleteFocusSession(sessionId)
-            setHistory(prev => prev.filter(session => session.id !== sessionId))
-          } catch (e) {
-            setError(e instanceof Error ? e.message : 'לא הצלחתי למחוק את זמן העבודה')
-          }
-        }}
-      />
     </main>
   )
 }
