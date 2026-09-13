@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return signedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    function ownsExistingDocument() {
+      return signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /projects/{projectId} {
+      allow create: if isOwner();
+      allow read, delete: if ownsExistingDocument();
+      allow update: if ownsExistingDocument() && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /tasks/{taskId} {
+      allow create: if isOwner();
+      allow read, delete: if ownsExistingDocument();
+      allow update: if ownsExistingDocument() && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /focusSessions/{sessionId} {
+      allow create: if isOwner();
+      allow read, delete: if ownsExistingDocument();
+      allow update: if ownsExistingDocument() && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
