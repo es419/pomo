@@ -226,44 +226,45 @@ export default function App() {
         </button>
       </nav>
 
-      {activeTab === 'focus' ? (
-        <>
-          {running ? (
-            <Timer
-              session={running}
-              task={runningTask}
-              project={runningProject}
-              onStop={async () => {
-                try {
-                  await stopSession(running)
-                  await refresh()
-                } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
-              }}
-            />
-          ) : activeTasks.length > 0 ? (
-            <StartPanel
-              tasks={activeTasks}
-              projects={projects}
-              onStart={async ({ taskId, mode, plannedSeconds }) => {
-                try {
-                  setError('')
-                  const task = activeTasks.find(t => t.id === taskId)
-                  const session = await startSession({ taskId, projectId: task?.project_id, mode, plannedSeconds })
-                  setRunning(session)
-                } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
-              }}
-            />
-          ) : (
-            <section className="card empty-state">
-              <div className="eyebrow">START HERE</div>
-              <h2>צור משימה ראשונה</h2>
-              <p className="muted">עבור לטאב ניהול, צור משימה — ואז היא תופיע כאן לבחירה.</p>
-              <button className="primary" type="button" onClick={() => selectTab('manage')}>לניהול פרויקטים ומשימות</button>
-            </section>
-          )}
-        </>
-      ) : activeTab === 'manage' ? (
-        <section className="manage-tab">
+      <section className="tab-viewport">
+        {activeTab === 'focus' ? (
+          <section className="focus-tab">
+            {running ? (
+              <Timer
+                session={running}
+                task={runningTask}
+                project={runningProject}
+                onStop={async () => {
+                  try {
+                    await stopSession(running)
+                    await refresh()
+                  } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
+                }}
+              />
+            ) : activeTasks.length > 0 ? (
+              <StartPanel
+                tasks={activeTasks}
+                projects={projects}
+                onStart={async ({ taskId, mode, plannedSeconds }) => {
+                  try {
+                    setError('')
+                    const task = activeTasks.find(t => t.id === taskId)
+                    const session = await startSession({ taskId, projectId: task?.project_id, mode, plannedSeconds })
+                    setRunning(session)
+                  } catch (e) { setError(e instanceof Error ? e.message : 'שגיאה') }
+                }}
+              />
+            ) : (
+              <section className="card empty-state">
+                <div className="eyebrow">START HERE</div>
+                <h2>צור משימה ראשונה</h2>
+                <p className="muted">עבור לטאב ניהול, צור משימה — ואז היא תופיע כאן לבחירה.</p>
+                <button className="primary" type="button" onClick={() => selectTab('manage')}>לניהול פרויקטים ומשימות</button>
+              </section>
+            )}
+          </section>
+        ) : activeTab === 'manage' ? (
+          <section className="manage-tab">
           <section className="card manage-card">
             <div className="section-head">
               <div><div className="eyebrow">ORGANIZE</div><h2>פרויקטים ומשימות</h2></div>
@@ -299,9 +300,9 @@ export default function App() {
             />
           </section>
         </section>
-      ) : (
-        <section className="stats-tab">
-          <div className="tab-heading stats-heading">
+        ) : (
+          <section className="stats-tab">
+            <div className="tab-heading stats-heading">
             <div className="stats-heading-copy">
               <div className="eyebrow">INSIGHTS</div>
               <h2>הסטטיסטיקות שלך</h2>
@@ -324,8 +325,9 @@ export default function App() {
               }
             }}
           />
-        </section>
-      )}
+          </section>
+        )}
+      </section>
     </main>
   )
 }
