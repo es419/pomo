@@ -54,9 +54,10 @@ function sessionFromDoc(id: string, data: Record<string, unknown>): FocusSession
 }
 
 
-function getInitialTab(): 'focus' | 'stats' {
+function getInitialTab(): 'focus' | 'stats' | 'manage' {
   const params = new URLSearchParams(window.location.search)
-  return params.get('tab') === 'stats' ? 'stats' : 'focus'
+  const tab = params.get('tab')
+  return tab === 'stats' || tab === 'manage' ? tab : 'focus'
 }
 
 function getInitialStatsPeriod(): StatsPeriod {
@@ -78,7 +79,7 @@ export default function App() {
   const [history, setHistory] = useState<FocusSession[]>([])
   const [error, setError] = useState('')
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
-  const [activeTab, setActiveTab] = useState<'focus' | 'stats'>(getInitialTab)
+  const [activeTab, setActiveTab] = useState<'focus' | 'stats' | 'manage'>(getInitialTab)
   const [initialStatsPeriod] = useState<StatsPeriod>(getInitialStatsPeriod)
   const [splashDone, setSplashDone] = useState(false)
 
@@ -156,16 +157,21 @@ export default function App() {
     }
   }
 
-  function selectTab(tab: 'focus' | 'stats') {
+  function selectTab(tab: 'focus' | 'stats' | 'manage') {
     setActiveTab(tab)
     const url = new URL(window.location.href)
-    if (tab === 'stats') {
-      url.searchParams.set('tab', 'stats')
-    } else {
+
+    if (tab === 'focus') {
       url.searchParams.delete('tab')
+    } else {
+      url.searchParams.set('tab', tab)
+    }
+
+    if (tab !== 'stats') {
       url.searchParams.delete('period')
       url.searchParams.delete('source')
     }
+
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
   }
 
@@ -214,6 +220,10 @@ export default function App() {
           <span className="tab-icon">▤</span>
           <span>סטטיסטיקות</span>
         </button>
+        <button className={activeTab === 'manage' ? 'active' : ''} onClick={() => selectTab('manage')}>
+          <span className="tab-icon">☷</span>
+          <span>ניהול</span>
+        </button>
       </nav>
 
       {activeTab === 'focus' ? (
@@ -247,10 +257,13 @@ export default function App() {
             <section className="card empty-state">
               <div className="eyebrow">START HERE</div>
               <h2>צור משימה ראשונה</h2>
-              <p className="muted">אחרי שתיצור משימה יופיע כאן כפתור ההתחלה.</p>
+              <p className="muted">עבור לטאב ניהול, צור משימה — ואז היא תופיע כאן לבחירה.</p>
+              <button className="primary" type="button" onClick={() => selectTab('manage')}>לניהול פרויקטים ומשימות</button>
             </section>
           )}
-
+        </>
+      ) : activeTab === 'manage' ? (
+        <section className="manage-tab">
           <section className="card manage-card">
             <div className="section-head">
               <div><div className="eyebrow">ORGANIZE</div><h2>פרויקטים ומשימות</h2></div>
@@ -285,15 +298,17 @@ export default function App() {
               }}
             />
           </section>
-        </>
+        </section>
       ) : (
         <section className="stats-tab">
-          <div className="tab-heading">
-            <div className="eyebrow">INSIGHTS</div>
-            <h2>הסטטיסטיקות שלך</h2>
-            <p className="muted">כל זמן העבודה, המגמות וההיסטוריה במקום אחד.</p>
+          <div className="tab-heading stats-heading">
+            <div className="stats-heading-copy">
+              <div className="eyebrow">INSIGHTS</div>
+              <h2>הסטטיסטיקות שלך</h2>
+              <p className="muted">כל זמן העבודה, המגמות וההיסטוריה במקום אחד.</p>
+            </div>
+            <NotificationSettings />
           </div>
-          <NotificationSettings />
           <Stats sessions={history} tasks={tasks} projects={projects} initialPeriod={initialStatsPeriod} />
           <History
             sessions={history}
