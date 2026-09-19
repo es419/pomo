@@ -30,8 +30,8 @@ onBackgroundMessage(messaging, payload => {
 
   return self.registration.showNotification(title, {
     body,
-    icon: '/pomo/pwa-192x192-v7.png',
-    badge: '/pomo/pwa-192x192-v7.png',
+    icon: '/pomo/pwa-192x192-v8.png',
+    badge: '/pomo/pwa-192x192-v8.png',
     tag: 'pomo-weekly-summary',
     renotify: true,
     dir: 'rtl',
