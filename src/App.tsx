@@ -310,21 +310,27 @@ export default function App() {
             </div>
             <NotificationSettings />
           </div>
-          <Stats sessions={history} tasks={tasks} projects={projects} initialPeriod={initialStatsPeriod} />
-          <History
-            sessions={history}
-            tasks={tasks}
-            projects={projects}
-            onDelete={async (sessionId) => {
-              try {
-                setError('')
-                await deleteFocusSession(sessionId)
-                setHistory(prev => prev.filter(session => session.id !== sessionId))
-              } catch (e) {
-                setError(e instanceof Error ? e.message : 'לא הצלחתי למחוק את זמן העבודה')
-              }
-            }}
-          />
+          <div className="stats-layout">
+            <div className="stats-overview">
+              <Stats sessions={history} tasks={tasks} projects={projects} initialPeriod={initialStatsPeriod} />
+            </div>
+            <div className="stats-history">
+              <History
+                sessions={history}
+                tasks={tasks}
+                projects={projects}
+                onDelete={async (sessionId) => {
+                  try {
+                    setError('')
+                    await deleteFocusSession(sessionId)
+                    setHistory(prev => prev.filter(session => session.id !== sessionId))
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : 'לא הצלחתי למחוק את זמן העבודה')
+                  }
+                }}
+              />
+            </div>
+          </div>
           </section>
         )}
       </section>
