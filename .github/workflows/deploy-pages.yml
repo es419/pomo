@@ -32,10 +32,10 @@ jobs:
       - name: Generate app icons
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick
-          convert public/icon-v7-source.webp -resize 512x512 public/pwa-512x512-v7.png
-          convert public/icon-v7-source.webp -resize 192x192 public/pwa-192x192-v7.png
-          convert public/icon-v7-source.webp -resize 180x180 public/apple-touch-icon-v7.png
+          sudo apt-get install -y imagemagick librsvg2-bin
+          convert -background none public/icon-v7-source.svg -resize 512x512 public/pwa-512x512-v7.png
+          convert -background none public/icon-v7-source.svg -resize 192x192 public/pwa-192x192-v7.png
+          convert -background none public/icon-v7-source.svg -resize 180x180 public/apple-touch-icon-v7.png
 
       - name: Build
         run: npm run build
