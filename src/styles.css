@@ -502,10 +502,24 @@ body {
   height:100dvh;
   min-height:100dvh;
 }
-.auth-shell {
+.shell.auth-shell {
   height:100dvh;
-  min-height:0;
+  min-height:100dvh;
+  width:min(820px, 100%);
+  margin:0 auto;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    18px
+    max(20px, env(safe-area-inset-bottom));
+  display:grid;
+  grid-template-columns:minmax(0, 480px);
+  justify-content:center;
+  align-content:center;
   overflow-y:auto;
+}
+.shell.auth-shell .card {
+  width:100%;
+  margin:0;
 }
 .shell {
   height:100dvh;
