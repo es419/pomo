@@ -3,6 +3,8 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import type { FocusSession, Project, StatsPeriod, Task } from '../types'
 import { formatDuration, localDateKey, startOfMonth, startOfWeek } from '../lib/time'
 
+const WEEKDAY_LABELS = ['יום א׳', 'יום ב׳', 'יום ג׳', 'יום ד׳', 'יום ה׳', 'יום ו׳', 'יום ש׳']
+
 export function Stats({ sessions, tasks, projects, initialPeriod = 'week' }: { sessions: FocusSession[]; tasks: Task[]; projects: Project[]; initialPeriod?: StatsPeriod }) {
   const [period, setPeriod] = useState<StatsPeriod>(initialPeriod)
 
@@ -26,7 +28,11 @@ export function Stats({ sessions, tasks, projects, initialPeriod = 'week' }: { s
       d.setDate(d.getDate() + i)
       return {
         key: localDateKey(d),
-        label: period === 'month' ? String(d.getDate()) : new Intl.DateTimeFormat('he-IL', { weekday: 'short' }).format(d),
+        label: period === 'month'
+          ? String(d.getDate())
+          : period === 'week'
+            ? WEEKDAY_LABELS[d.getDay()]
+            : 'היום',
         seconds: 0
       }
     })
@@ -35,7 +41,9 @@ export function Stats({ sessions, tasks, projects, initialPeriod = 'week' }: { s
       const row = map.get(localDateKey(s.started_at))
       if (row) row.seconds += s.duration_seconds ?? 0
     })
-    return rows
+    // Recharts lays categories out left-to-right. For a Hebrew weekly view,
+    // reverse only the presentation order so Sunday is the rightmost tick.
+    return period === 'week' ? [...rows].reverse() : rows
   }, [filtered, period])
 
   const byTask = useMemo(() => {
@@ -82,7 +90,7 @@ export function Stats({ sessions, tasks, projects, initialPeriod = 'week' }: { s
         <ResponsiveContainer width="100%" height={230}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.18} />
-            <XAxis dataKey="label" />
+            <XAxis dataKey="label" interval={0} tickMargin={8} />
             <YAxis tickFormatter={(v) => `${Math.round(v / 3600)}ש`} width={34} />
             <Tooltip formatter={(v) => formatDuration(Number(v), false)} />
             <Bar dataKey="seconds" radius={[8, 8, 0, 0]} />
