@@ -31,5 +31,12 @@ service cloud.firestore {
       allow read, delete: if ownsExistingDocument();
       allow update: if ownsExistingDocument() && request.resource.data.userId == request.auth.uid;
     }
+
+
+    match /notificationDevices/{deviceId} {
+      allow create: if isOwner();
+      allow read, delete: if ownsExistingDocument();
+      allow update: if ownsExistingDocument() && request.resource.data.userId == request.auth.uid;
+    }
   }
 }

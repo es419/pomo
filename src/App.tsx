@@ -5,7 +5,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore'
 import './styles.css'
 import { auth, db } from './lib/firebase'
 import { deleteFocusSession, getRunningSession, startSession, stopSession } from './lib/sessions'
-import type { FocusSession, Project, Task } from './types'
+import type { FocusSession, Project, StatsPeriod, Task } from './types'
 import { Timer } from './components/Timer'
 import { StartPanel } from './components/StartPanel'
 import { Stats } from './components/Stats'
@@ -14,6 +14,8 @@ import { Auth } from './components/Auth'
 import { TaskCreator } from './components/TaskCreator'
 import { ProjectCreator } from './components/ProjectCreator'
 import { OrganizerList } from './components/OrganizerList'
+import { NotificationSettings } from './components/NotificationSettings'
+import { disableWeeklyNotifications, refreshWeeklyNotificationsRegistration } from './lib/notifications'
 import { deleteProjectAndContents, deleteTaskAndSessions } from './lib/organize'
 
 type ThemeMode = 'light' | 'dark' | 'system'
@@ -51,6 +53,17 @@ function sessionFromDoc(id: string, data: Record<string, unknown>): FocusSession
   }
 }
 
+
+function getInitialTab(): 'focus' | 'stats' {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('tab') === 'stats' ? 'stats' : 'focus'
+}
+
+function getInitialStatsPeriod(): StatsPeriod {
+  const period = new URLSearchParams(window.location.search).get('period')
+  return period === 'day' || period === 'month' || period === 'week' ? period : 'week'
+}
+
 function getInitialTheme(): ThemeMode {
   const saved = localStorage.getItem('pomo-theme')
   return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system'
@@ -65,7 +78,8 @@ export default function App() {
   const [history, setHistory] = useState<FocusSession[]>([])
   const [error, setError] = useState('')
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
-  const [activeTab, setActiveTab] = useState<'focus' | 'stats'>('focus')
+  const [activeTab, setActiveTab] = useState<'focus' | 'stats'>(getInitialTab)
+  const [initialStatsPeriod] = useState<StatsPeriod>(getInitialStatsPeriod)
   const [splashDone, setSplashDone] = useState(false)
 
   useEffect(() => {
@@ -129,7 +143,31 @@ export default function App() {
     }
   }
 
-  useEffect(() => { void refresh() }, [user])
+  useEffect(() => {
+    void refresh()
+    if (user) void refreshWeeklyNotificationsRegistration()
+  }, [user])
+
+  async function handleSignOut() {
+    try {
+      await disableWeeklyNotifications()
+    } finally {
+      await signOut(auth)
+    }
+  }
+
+  function selectTab(tab: 'focus' | 'stats') {
+    setActiveTab(tab)
+    const url = new URL(window.location.href)
+    if (tab === 'stats') {
+      url.searchParams.set('tab', 'stats')
+    } else {
+      url.searchParams.delete('tab')
+      url.searchParams.delete('period')
+      url.searchParams.delete('source')
+    }
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+  }
 
   if (!authReady || !splashDone) {
     return (
@@ -161,18 +199,18 @@ export default function App() {
             <button className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')} title="כהה">🌙</button>
             <button className={theme === 'system' ? 'active' : ''} onClick={() => setTheme('system')} title="מערכת">◐</button>
           </div>
-          <button className="link-button" onClick={() => void signOut(auth)}>יציאה</button>
+          <button className="link-button" onClick={() => void handleSignOut()}>יציאה</button>
         </div>
       </header>
 
       {error && <div className="error">{error}</div>}
 
       <nav className="app-tabs" aria-label="ניווט ראשי">
-        <button className={activeTab === 'focus' ? 'active' : ''} onClick={() => setActiveTab('focus')}>
+        <button className={activeTab === 'focus' ? 'active' : ''} onClick={() => selectTab('focus')}>
           <span className="tab-icon">◷</span>
           <span>פוקוס</span>
         </button>
-        <button className={activeTab === 'stats' ? 'active' : ''} onClick={() => setActiveTab('stats')}>
+        <button className={activeTab === 'stats' ? 'active' : ''} onClick={() => selectTab('stats')}>
           <span className="tab-icon">▤</span>
           <span>סטטיסטיקות</span>
         </button>
@@ -255,7 +293,8 @@ export default function App() {
             <h2>הסטטיסטיקות שלך</h2>
             <p className="muted">כל זמן העבודה, המגמות וההיסטוריה במקום אחד.</p>
           </div>
-          <Stats sessions={history} tasks={tasks} projects={projects} />
+          <NotificationSettings />
+          <Stats sessions={history} tasks={tasks} projects={projects} initialPeriod={initialStatsPeriod} />
           <History
             sessions={history}
             tasks={tasks}

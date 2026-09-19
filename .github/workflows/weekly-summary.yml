@@ -1,0 +1,33 @@
+name: Send weekly Pomo summary
+
+on:
+  schedule:
+    - cron: '0 20 * * 6'
+      timezone: 'Asia/Jerusalem'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pomo-weekly-summary
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Send weekly summaries
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_PROJECT_ID: pomo-f1093
+          POMO_APP_URL: https://es419.github.io/pomo/
+        run: node .github/scripts/send-weekly-summary.mjs

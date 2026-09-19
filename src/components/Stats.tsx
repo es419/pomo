@@ -3,8 +3,8 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import type { FocusSession, Project, StatsPeriod, Task } from '../types'
 import { formatDuration, localDateKey, startOfMonth, startOfWeek } from '../lib/time'
 
-export function Stats({ sessions, tasks, projects }: { sessions: FocusSession[]; tasks: Task[]; projects: Project[] }) {
-  const [period, setPeriod] = useState<StatsPeriod>('week')
+export function Stats({ sessions, tasks, projects, initialPeriod = 'week' }: { sessions: FocusSession[]; tasks: Task[]; projects: Project[]; initialPeriod?: StatsPeriod }) {
+  const [period, setPeriod] = useState<StatsPeriod>(initialPeriod)
 
   const filtered = useMemo(() => {
     const now = new Date()
@@ -55,7 +55,9 @@ export function Stats({ sessions, tasks, projects }: { sessions: FocusSession[];
       totals.set(key, (totals.get(key) ?? 0) + (s.duration_seconds ?? 0))
     })
     return [...totals.entries()].map(([id, seconds]) => ({
-      name: id === 'none' ? 'ללא פרויקט' : projects.find(p => p.id === id)?.name ?? 'פרויקט שנמחק', seconds
+      id,
+      name: id === 'none' ? 'ללא פרויקט' : projects.find(p => p.id === id)?.name ?? 'פרויקט שנמחק',
+      seconds
     })).sort((a, b) => b.seconds - a.seconds).slice(0, 5)
   }, [filtered, projects])
 
@@ -95,7 +97,7 @@ export function Stats({ sessions, tasks, projects }: { sessions: FocusSession[];
         </div>
         <div>
           <h3>לפי פרויקט</h3>
-          {byProject.length === 0 ? <p className="muted">אין נתונים</p> : byProject.map(row => <div className="rank-row" key={row.name}><span>{row.name}</span><strong>{formatDuration(row.seconds, false)}</strong></div>)}
+          {byProject.length === 0 ? <p className="muted">אין נתונים</p> : byProject.map(row => <div className="rank-row" key={row.id}><span>{row.name}</span><strong>{formatDuration(row.seconds, false)}</strong></div>)}
         </div>
       </div>
     </section>

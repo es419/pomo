@@ -26,7 +26,7 @@ export function localDateKey(value: string | Date) {
 
 export function startOfWeek(date = new Date()) {
   const d = new Date(date)
-  const diff = (d.getDay() + 6) % 7
+  const diff = d.getDay()
   d.setHours(0, 0, 0, 0)
   d.setDate(d.getDate() - diff)
   return d
