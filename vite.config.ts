@@ -15,8 +15,6 @@ export default defineConfig({
         name: 'Pomo',
         short_name: 'Pomo',
         description: 'Focus timer and study analytics',
-        theme_color: '#07111f',
-        background_color: '#0b1220',
         display: 'standalone',
         start_url: '/pomo/',
         scope: '/pomo/',

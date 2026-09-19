@@ -3,7 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#07111f" />
+    <meta id="pomo-theme-light" name="theme-color" content="#f4f7fb" media="(prefers-color-scheme: light)" />
+    <meta id="pomo-theme-dark" name="theme-color" content="#07111f" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script>
+      (() => {
+        try {
+          const saved = localStorage.getItem('pomo-theme')
+          const mode = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system'
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode
+          const lightMeta = document.getElementById('pomo-theme-light')
+          const darkMeta = document.getElementById('pomo-theme-dark')
+
+          document.documentElement.dataset.theme = resolved
+          document.documentElement.dataset.themeMode = mode
+          document.documentElement.style.colorScheme = resolved
+
+          if (mode === 'system') {
+            lightMeta?.setAttribute('media', '(prefers-color-scheme: light)')
+            darkMeta?.setAttribute('media', '(prefers-color-scheme: dark)')
+          } else {
+            lightMeta?.setAttribute('media', resolved === 'light' ? 'all' : 'not all')
+            darkMeta?.setAttribute('media', resolved === 'dark' ? 'all' : 'not all')
+          }
+        } catch {
+          // Keep the media-query defaults above if storage is unavailable.
+        }
+      })()
+    </script>
     <link rel="apple-touch-icon" href="/pomo/apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="/pomo/pwa-192x192.png" />
     <title>Pomo</title>

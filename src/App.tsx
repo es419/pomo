@@ -101,8 +101,16 @@ export default function App() {
       document.documentElement.dataset.theme = resolved
       document.documentElement.dataset.themeMode = theme
       document.documentElement.style.colorScheme = resolved
-      const themeMeta = document.querySelector('meta[name="theme-color"]')
-      themeMeta?.setAttribute('content', resolved === 'dark' ? '#07111f' : '#f4f7fb')
+      const lightThemeMeta = document.querySelector<HTMLMetaElement>('#pomo-theme-light')
+      const darkThemeMeta = document.querySelector<HTMLMetaElement>('#pomo-theme-dark')
+
+      if (theme === 'system') {
+        lightThemeMeta?.setAttribute('media', '(prefers-color-scheme: light)')
+        darkThemeMeta?.setAttribute('media', '(prefers-color-scheme: dark)')
+      } else {
+        lightThemeMeta?.setAttribute('media', resolved === 'light' ? 'all' : 'not all')
+        darkThemeMeta?.setAttribute('media', resolved === 'dark' ? 'all' : 'not all')
+      }
     }
 
     localStorage.setItem('pomo-theme', theme)
