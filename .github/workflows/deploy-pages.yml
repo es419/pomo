@@ -33,9 +33,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick
-          convert public/icon-v8-source.jpg -resize 512x512 public/pwa-512x512-v8.png
-          convert public/icon-v8-source.jpg -resize 192x192 public/pwa-192x192-v8.png
-          convert public/icon-v8-source.jpg -resize 180x180 public/apple-touch-icon-v8.png
+          # Crop the baked-in white rim, then fill the full icon canvas.
+          convert public/icon-v8-source.jpg -gravity center -crop 90%x90%+0+0 +repage -resize 512x512^ -gravity center -extent 512x512 public/pwa-512x512-v9.png
+          convert public/pwa-512x512-v9.png -resize 192x192 public/pwa-192x192-v9.png
+          convert public/pwa-512x512-v9.png -resize 180x180 public/apple-touch-icon-v9.png
 
       - name: Build
         run: npm run build

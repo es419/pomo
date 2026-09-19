@@ -19,8 +19,8 @@ export default defineConfig({
         start_url: '/pomo/',
         scope: '/pomo/',
         icons: [
-          { src: '/pomo/pwa-192x192-v8.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/pomo/pwa-512x512-v8.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          { src: '/pomo/pwa-192x192-v9.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: '/pomo/pwa-512x512-v9.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       }
     })
