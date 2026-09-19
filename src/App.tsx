@@ -187,7 +187,7 @@ export default function App() {
     return (
       <div className="splash-screen" role="status" aria-label="Pomo נטענת">
         <div className="splash-glow" />
-        <img className="splash-logo" src={`${import.meta.env.BASE_URL}pwa-512x512.png`} alt="" />
+        <img className="splash-logo" src={`${import.meta.env.BASE_URL}pwa-512x512-v7.png`} alt="" />
         <div className="splash-name">POMO</div>
         <div className="splash-loader"><span /></div>
       </div>
