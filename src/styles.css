@@ -974,35 +974,3 @@ body {
   color:#ffffff;
   box-shadow:0 6px 16px rgba(37,99,235,.14);
 }
-
-
-/* Native-style mobile keyboard editing: keep the app shell still and float only the active field. */
-.keyboard-field-placeholder{
-  visibility:hidden!important;
-  pointer-events:none!important;
-  flex-shrink:0;
-}
-[data-keyboard-floating="true"]{
-  box-sizing:border-box!important;
-  z-index:10050!important;
-  box-shadow:0 10px 30px rgba(0,0,0,.18)!important;
-  transition:top 120ms ease-out,left 120ms ease-out,width 120ms ease-out!important;
-  -webkit-transform:translateZ(0)!important;
-  transform:translateZ(0)!important;
-}
-.keyboard-float-host{
-  transform:none!important;
-  filter:none!important;
-  -webkit-backdrop-filter:none!important;
-  backdrop-filter:none!important;
-}
-
-
-/* While an editor is floating, remove the card's containing-block effects so
-   position:fixed is truly relative to the viewport. */
-.card.keyboard-editor-open{
-  transform:none!important;
-  filter:none!important;
-  -webkit-backdrop-filter:none!important;
-  backdrop-filter:none!important;
-}
