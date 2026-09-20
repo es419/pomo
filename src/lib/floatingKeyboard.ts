@@ -114,9 +114,10 @@ export function installFloatingKeyboardEditor() {
   const settle = () => {
     window.clearTimeout(settleTimer)
     settleTimer = window.setTimeout(() => {
-      if (keyboardIsOpen() && isTextEditor(document.activeElement)) {
-        floatField(document.activeElement)
-      } else if (!keyboardIsOpen() && document.activeElement !== active?.field) {
+      const focused = document.activeElement
+      if (keyboardIsOpen() && isTextEditor(focused)) {
+        floatField(focused)
+      } else if (!keyboardIsOpen() && focused !== active?.field) {
         restore()
       }
     }, 30)
