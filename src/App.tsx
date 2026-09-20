@@ -17,6 +17,7 @@ import { OrganizerList } from './components/OrganizerList'
 import { NotificationSettings } from './components/NotificationSettings'
 import { disableWeeklyNotifications, refreshWeeklyNotificationsRegistration } from './lib/notifications'
 import { deleteProjectAndContents, deleteTaskAndSessions } from './lib/organize'
+import { installFloatingKeyboardEditor } from './lib/floatingKeyboard'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -82,6 +83,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'focus' | 'stats' | 'manage'>(getInitialTab)
   const [initialStatsPeriod] = useState<StatsPeriod>(getInitialStatsPeriod)
   const [splashDone, setSplashDone] = useState(false)
+
+  useEffect(() => installFloatingKeyboardEditor(), [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSplashDone(true), 1150)
