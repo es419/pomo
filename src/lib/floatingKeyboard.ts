@@ -25,9 +25,6 @@ export function installFloatingKeyboardEditor() {
     hosts: HTMLElement[]
   } | null = null
   let settleTimer = 0
-  let suppressClickFor: HTMLInputElement | HTMLTextAreaElement | null = null
-  let suppressClickUntil = 0
-  let focusStartedAt = 0
 
   const keyboardIsOpen = () => baselineHeight - vv.height > 110
 
@@ -132,9 +129,6 @@ export function installFloatingKeyboardEditor() {
     if (document.activeElement === field) return
 
     event.preventDefault()
-    suppressClickFor = field
-    suppressClickUntil = performance.now() + 700
-    focusStartedAt = performance.now()
     floatField(field, true)
 
     try {
@@ -158,27 +152,8 @@ export function installFloatingKeyboardEditor() {
   const onFocusOut = (event: FocusEvent) => {
     if (!isTextEditor(event.target)) return
     window.setTimeout(() => {
-      const justStarted = performance.now() - focusStartedAt < 450
-      if (justStarted && active?.field === event.target) {
-        try {
-          active.field.focus({ preventScroll: true })
-          return
-        } catch {}
-      }
       if (!isTextEditor(document.activeElement)) restore()
-    }, 60)
-  }
-
-  const onClick = (event: MouseEvent) => {
-    if (!suppressClickFor || performance.now() > suppressClickUntil) {
-      suppressClickFor = null
-      return
-    }
-    if (event.target === suppressClickFor) {
-      event.preventDefault()
-      event.stopPropagation()
-      suppressClickFor = null
-    }
+    }, 0)
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -200,7 +175,6 @@ export function installFloatingKeyboardEditor() {
   })
 
   document.addEventListener('pointerdown', onPointerDown, true)
-  document.addEventListener('click', onClick, true)
   document.addEventListener('focusin', onFocusIn)
   document.addEventListener('focusout', onFocusOut)
   document.addEventListener('keydown', onKeyDown)
@@ -209,7 +183,6 @@ export function installFloatingKeyboardEditor() {
 
   return () => {
     document.removeEventListener('pointerdown', onPointerDown, true)
-    document.removeEventListener('click', onClick, true)
     document.removeEventListener('focusin', onFocusIn)
     document.removeEventListener('focusout', onFocusOut)
     document.removeEventListener('keydown', onKeyDown)
