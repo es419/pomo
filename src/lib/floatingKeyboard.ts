@@ -5,9 +5,21 @@ const EXCLUDED_INPUT_TYPES = new Set([
 
 function isTextEditor(el: EventTarget | null): el is HTMLInputElement | HTMLTextAreaElement {
   if (!(el instanceof HTMLElement)) return false
+  if (!el.closest('.shell')) return false
   if (el instanceof HTMLTextAreaElement) return true
   if (!(el instanceof HTMLInputElement)) return false
   return !EXCLUDED_INPUT_TYPES.has((el.type || 'text').toLowerCase())
+}
+
+function nearestScrollContainer(field: HTMLElement): HTMLElement | null {
+  let parent = field.parentElement
+  while (parent && parent !== document.body) {
+    const cs = getComputedStyle(parent)
+    const overflowY = cs.overflowY
+    if ((overflowY === 'auto' || overflowY === 'scroll') && parent.scrollHeight > parent.clientHeight) return parent
+    parent = parent.parentElement
+  }
+  return null
 }
 
 export function installFloatingKeyboardEditor() {
@@ -16,33 +28,66 @@ export function installFloatingKeyboardEditor() {
   if (!vv || !isMobile) return () => {}
 
   let baselineHeight = Math.max(vv.height, window.innerHeight)
+  let settleTimer = 0
   let active: {
     field: HTMLInputElement | HTMLTextAreaElement
     placeholder: HTMLElement
     style: string
-    className: string
     rect: DOMRect
-    hosts: HTMLElement[]
+    host: HTMLElement | null
+    scroller: HTMLElement | null
+    scrollTop: number
   } | null = null
-  let settleTimer = 0
 
   const keyboardIsOpen = () => baselineHeight - vv.height > 110
 
   const restore = () => {
     if (!active) return
-    const { field, placeholder, style, className, hosts } = active
-    field.className = className
+    const { field, placeholder, style, host } = active
+    field.removeAttribute('data-keyboard-floating')
     if (style) field.setAttribute('style', style)
     else field.removeAttribute('style')
     placeholder.remove()
-    hosts.forEach(host => host.classList.remove('keyboard-float-host'))
+    host?.classList.remove('keyboard-editor-open')
     active = null
-    document.documentElement.classList.remove('keyboard-editor-active')
   }
 
-  const positionField = (preFocus = false) => {
+  const snapshot = (field: HTMLInputElement | HTMLTextAreaElement) => {
+    const rect = field.getBoundingClientRect()
+    const scroller = nearestScrollContainer(field)
+    const host = field.closest<HTMLElement>('.card')
+    const cs = getComputedStyle(field)
+    const placeholder = document.createElement('span')
+    placeholder.className = 'keyboard-field-placeholder'
+    placeholder.style.display = cs.display === 'inline' ? 'inline-block' : cs.display
+    placeholder.style.width = `${rect.width}px`
+    placeholder.style.height = `${rect.height}px`
+    placeholder.style.marginTop = cs.marginTop
+    placeholder.style.marginRight = cs.marginRight
+    placeholder.style.marginBottom = cs.marginBottom
+    placeholder.style.marginLeft = cs.marginLeft
+    placeholder.style.flex = cs.flex
+    placeholder.style.alignSelf = cs.alignSelf
+    field.parentNode?.insertBefore(placeholder, field)
+
+    active = {
+      field,
+      placeholder,
+      style: field.getAttribute('style') || '',
+      rect,
+      host,
+      scroller,
+      scrollTop: scroller?.scrollTop || 0
+    }
+    host?.classList.add('keyboard-editor-open')
+    field.setAttribute('data-keyboard-floating', 'true')
+  }
+
+  const position = (preFocus = false) => {
     if (!active) return
-    const { field, rect } = active
+    const { field, rect, scroller, scrollTop } = active
+    if (scroller) scroller.scrollTop = scrollTop
+
     const width = Math.min(rect.width || window.innerWidth - 28, window.innerWidth - 28)
     const left = Math.max(14, Math.min(rect.left, window.innerWidth - width - 14))
     const height = Math.max(44, rect.height)
@@ -68,84 +113,49 @@ export function installFloatingKeyboardEditor() {
     set('z-index', '10050')
   }
 
-  const floatField = (field: HTMLInputElement | HTMLTextAreaElement, preFocus = false) => {
+  const float = (field: HTMLInputElement | HTMLTextAreaElement, preFocus = false) => {
     if (active?.field !== field) restore()
-
-    if (!active) {
-      const rect = field.getBoundingClientRect()
-      const cs = getComputedStyle(field)
-      const placeholder = document.createElement('span')
-      placeholder.className = 'keyboard-field-placeholder'
-      placeholder.style.display = cs.display === 'inline' ? 'inline-block' : cs.display
-      placeholder.style.width = `${rect.width}px`
-      placeholder.style.height = `${rect.height}px`
-      placeholder.style.margin = cs.margin
-      placeholder.style.flex = cs.flex
-      placeholder.style.alignSelf = cs.alignSelf
-      field.parentNode?.insertBefore(placeholder, field)
-
-      const hosts: HTMLElement[] = []
-      let parent = field.parentElement
-      while (parent && parent !== document.body && parent !== document.documentElement) {
-        const pcs = getComputedStyle(parent)
-        const backdrop = pcs.getPropertyValue('backdrop-filter') || pcs.getPropertyValue('-webkit-backdrop-filter')
-        if (pcs.transform !== 'none' || pcs.filter !== 'none' || (backdrop && backdrop !== 'none')) {
-          parent.classList.add('keyboard-float-host')
-          hosts.push(parent)
-        }
-        parent = parent.parentElement
-      }
-
-      active = {
-        field,
-        placeholder,
-        style: field.getAttribute('style') || '',
-        className: field.className,
-        rect,
-        hosts
-      }
-      document.documentElement.classList.add('keyboard-editor-active')
-      field.classList.add('keyboard-floating-field')
-    }
-
-    positionField(preFocus)
+    if (!active) snapshot(field)
+    position(preFocus)
   }
 
   const settle = () => {
     window.clearTimeout(settleTimer)
     settleTimer = window.setTimeout(() => {
-      const focused = document.activeElement
-      if (keyboardIsOpen() && isTextEditor(focused)) {
-        floatField(focused)
-      } else if (!keyboardIsOpen() && focused !== active?.field) {
-        restore()
-      }
+      const field = document.activeElement
+      if (keyboardIsOpen() && isTextEditor(field)) float(field)
+      else if (!keyboardIsOpen() && !isTextEditor(field)) restore()
     }, 30)
   }
 
-  const onPointerDown = (event: PointerEvent) => {
-    const field = event.target
-    if (!isTextEditor(field) || field.disabled || field.readOnly) return
-    if (document.activeElement === field) return
-
+  const activate = (field: HTMLInputElement | HTMLTextAreaElement, event: Event) => {
+    if (field.disabled || field.readOnly || document.activeElement === field) return
     event.preventDefault()
-    floatField(field, true)
-
-    try {
-      field.focus({ preventScroll: true })
-    } catch {
-      field.focus()
-    }
-
+    float(field, true)
+    try { field.focus({ preventScroll: true }) }
+    catch { field.focus() }
     try {
       const end = field.value.length
       field.setSelectionRange?.(end, end)
     } catch {}
   }
 
+  // iOS reliably suppresses its synthetic follow-up click when touchstart itself
+  // is cancelled. That prevents the quick tap from immediately blurring the
+  // field after we move it. Pointerdown is kept only as a non-touch fallback.
+  const onTouchStart = (event: TouchEvent) => {
+    const field = event.target
+    if (isTextEditor(field)) activate(field, event)
+  }
+  const onPointerDown = (event: PointerEvent) => {
+    if (event.pointerType === 'touch') return
+    const field = event.target
+    if (isTextEditor(field)) activate(field, event)
+  }
+
   const onFocusIn = (event: FocusEvent) => {
     if (!isTextEditor(event.target)) return
-    if (active?.field !== event.target) floatField(event.target, true)
+    if (active?.field !== event.target) float(event.target, true)
     settle()
   }
 
@@ -164,7 +174,7 @@ export function installFloatingKeyboardEditor() {
   }
 
   const onViewportChange = () => {
-    if (!keyboardIsOpen() && !isTextEditor(document.activeElement)) {
+    if (!keyboardIsOpen() && document.activeElement === document.body) {
       baselineHeight = Math.max(baselineHeight, vv.height)
     }
     settle()
@@ -174,6 +184,7 @@ export function installFloatingKeyboardEditor() {
     if (isTextEditor(el) && !el.hasAttribute('enterkeyhint')) el.setAttribute('enterkeyhint', 'done')
   })
 
+  document.addEventListener('touchstart', onTouchStart, { capture: true, passive: false })
   document.addEventListener('pointerdown', onPointerDown, true)
   document.addEventListener('focusin', onFocusIn)
   document.addEventListener('focusout', onFocusOut)
@@ -182,6 +193,7 @@ export function installFloatingKeyboardEditor() {
   vv.addEventListener('scroll', onViewportChange)
 
   return () => {
+    document.removeEventListener('touchstart', onTouchStart, true)
     document.removeEventListener('pointerdown', onPointerDown, true)
     document.removeEventListener('focusin', onFocusIn)
     document.removeEventListener('focusout', onFocusOut)
