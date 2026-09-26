@@ -976,3 +976,10 @@ body {
 }
 
 
+
+/* iOS Home Screen PWA: keep header content below the system top-edge blur. */
+@media (display-mode: standalone) and (max-width:650px) {
+  .shell:not(.auth-shell) {
+    padding-top:calc(max(10px, env(safe-area-inset-top)) + 16px);
+  }
+}
