@@ -14,7 +14,7 @@
   --accent: #4f8cff;
   --accent-soft: #b9d9ff;
   --shadow: rgba(0,20,70,.26);
-  --page-gradient: radial-gradient(circle at 50% -12%, #164fbd 0, #0b2b6f 24%, #081b49 48%, #06132f 78%);
+  --page-gradient: linear-gradient(180deg, #0b1f46 0%, #081b3d 52%, #06132f 100%);
 }
 
 :root[data-theme="light"] {
