@@ -975,15 +975,3 @@ body {
   box-shadow:0 6px 16px rgba(37,99,235,.14);
 }
 
-/* iOS Home Screen PWA: isolated opaque status-bar surface. */
-@media (display-mode: standalone) and (max-width:650px) {
-  body::before {
-    content:"";
-    position:fixed;
-    z-index:9999;
-    inset:0 0 auto 0;
-    height:env(safe-area-inset-top);
-    background:var(--bg);
-    pointer-events:none;
-  }
-}
