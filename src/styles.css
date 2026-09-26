@@ -976,13 +976,3 @@ body {
 }
 
 
-/* Diagnostic: disable glass blur only in the mobile installed PWA header. */
-@media (display-mode: standalone) and (max-width:650px) {
-  .topbar,
-  .topbar-actions,
-  .theme-switch,
-  .notification-trigger {
-    -webkit-backdrop-filter:none !important;
-    backdrop-filter:none !important;
-  }
-}
